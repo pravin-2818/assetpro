@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AssetPro — Equipment Management</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- ═══════ LOGIN PAGE — FIX 1: FULL SCREEN ═══════════════════ -->
+<div id="login-page">
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+  <div class="login-grid"></div>
+  <div class="login-card">
+    <div class="login-logo">
+      <div class="logo-icon">A</div>
+      <div><h1>AssetPro</h1><p>Equipment Management System v5</p></div>
+    </div>
+    <div id="lerr" class="lerr"></div>
+    <label class="lbl">Username</label>
+    <input class="linput" id="lu" type="text" placeholder="admin" autocomplete="username">
+    <label class="lbl">Password</label>
+    <input class="linput" id="lp" type="password" placeholder="••••••••" autocomplete="current-password">
+    <button class="lbtn" id="lbtn" onclick="doLogin()">Sign In →</button>
+  </div>
+</div>
+
+<!-- ═══════ APP ════════════════════════════════════════════════ -->
+<div id="app" style="display:none">
+  <div class="mob-overlay" id="mob-overlay" onclick="closeSidebar()"></div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sb-head">
+      <div class="sb-logo"><div class="logo-icon sm">A</div>AssetPro</div>
+      <button class="sb-close" onclick="closeSidebar()">✕</button>
+    </div>
+
+    <div class="sb-nav">
+      <div class="sb-section">Main</div>
+      <a class="nav-item active" data-p="dashboard" onclick="nav('dashboard')">
+        <span class="nav-icon">📊</span>Dashboard
+      </a>
+      <a class="nav-item" data-p="equipment" onclick="nav('equipment')">
+        <span class="nav-icon">💻</span>Equipment
+      </a>
+      <a class="nav-item" data-p="employees" onclick="nav('employees')">
+        <span class="nav-icon">👥</span>Employees
+      </a>
+      <a class="nav-item" data-p="assignments" onclick="nav('assignments')">
+        <span class="nav-icon">🔗</span>Assignments
+      </a>
+      <div class="sb-div"></div>
+      <div class="sb-section">Reports</div>
+      <a class="nav-item" data-p="history" onclick="nav('history')">
+        <span class="nav-icon">📋</span>Audit Log
+      </a>
+      <!-- FIX 2 (role): hidden for viewer via JS -->
+      <a class="nav-item" id="nav-export" onclick="exportAll()">
+        <span class="nav-icon">📤</span>Export All
+      </a>
+      <a class="nav-item" data-p="depreciation" onclick="nav('depreciation')">
+        <span class="nav-icon">📉</span>Depreciation
+      </a>
+      <a class="nav-item" data-p="maintenance" onclick="nav('maintenance')">
+        <span class="nav-icon">🔧</span>Maintenance
+      </a>
+      <a class="nav-item" data-p="reports" onclick="nav('reports')">
+        <span class="nav-icon">📊</span>Dept Reports
+      </a>
+      <a class="nav-item" data-p="search" onclick="nav('search')">
+        <span class="nav-icon">🔍</span>Global Search
+      </a>
+    </div>
+
+    <!-- FIX 4: Sidebar footer — logout clearly labeled -->
+    <div class="sb-foot">
+      <div class="user-info">
+        <div class="user-av" id="uav">A</div>
+        <div>
+          <div class="user-name" id="uname">Admin</div>
+          <div class="user-role" id="urole">admin</div>
+        </div>
+      </div>
+      <div class="sb-btns">
+        <button class="sb-btn sb-theme" onclick="toggleTheme()" id="theme-btn" title="Toggle theme">🌙</button>
+        <!-- FIX 4: Logout with clear text label -->
+        <button class="sb-btn sb-logout" onclick="doLogout()" title="Logout">⏏ Logout</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <div class="main-wrap">
+    <header class="topbar">
+      <button class="topbar-burger" onclick="openSidebar()">☰</button>
+      <div class="topbar-title" id="ptitle">Dashboard</div>
+      
+      <div class="topbar-right">
+        <button class="tb-btn" onclick="toggleTheme()" id="theme-btn2" title="Toggle theme">🌙</button>
+        <button class="tb-btn" id="notif-btn" onclick="toggleNotif()">
+          🔔<span class="tb-badge" id="nbadge" style="display:none">0</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- NOTIFICATION PANEL -->
+    <div class="notif-panel" id="notif-panel" style="display:none">
+      <div class="np-head">
+        Notifications
+        <span class="np-clear" onclick="clearNotifs()">Clear all</span>
+      </div>
+      <div class="np-list" id="np-list"><p class="empty-msg">No notifications</p></div>
+    </div>
+
+    <main class="content">
+
+      <!-- ══ DASHBOARD ══════════════════════════════════════════ -->
+      <div id="pg-dashboard" class="page active">
+        <div class="ph">
+          <div class="ph-left">
+            <h2>Dashboard</h2>
+            <p id="dash-date">Loading...</p>
+          </div>
+          <div class="ph-right">
+            <button class="btn btn-sm btn-outline" onclick="loadDash()">↻ Refresh</button>
+          </div>
+        </div>
+
+        <!-- KPI Row 1: Main Stats -->
+        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr)">
+          <div class="kpi kb" style="animation-delay:.00s" onclick="nav('equipment')">
+            <div class="kpi-ic">💻</div>
+            <div><div class="kpi-val" id="k-total">—</div><div class="kpi-lbl">Total Equipment</div></div>
+          </div>
+          <div class="kpi kp" style="animation-delay:.08s" onclick="nav('employees')">
+            <div class="kpi-ic">👥</div>
+            <div><div class="kpi-val" id="k-emp">—</div><div class="kpi-lbl">Total Employees</div></div>
+          </div>
+          <div class="kpi ky" style="animation-delay:.16s" onclick="nav('assignments')">
+            <div class="kpi-ic">🔗</div>
+            <div><div class="kpi-val" id="k-asgn-tot">—</div><div class="kpi-lbl">Active Assignments</div></div>
+          </div>
+          <div class="kpi kg" style="animation-delay:.24s" onclick="navEquipAvailable()">
+            <div class="kpi-ic">✅</div>
+            <div><div class="kpi-val" id="k-available">—</div><div class="kpi-lbl">Available Now</div></div>
+          </div>
+        </div>
+
+        <!-- KPI Row 2: Status Stats -->
+        <div class="kpi-grid" style="grid-template-columns:repeat(4,1fr);margin-top:-.6rem">
+          <div class="kpi kr" style="animation-delay:.32s" onclick="nav('assignments')">
+            <div class="kpi-ic">⏰</div>
+            <div><div class="kpi-val" id="k-overdue">—</div><div class="kpi-lbl">Overdue Returns</div></div>
+          </div>
+          <div class="kpi" style="--kc:#f59e0b;animation-delay:.40s" onclick="nav('maintenance')">
+            <div class="kpi-ic" style="background:#f59e0b20">🔧</div>
+            <div><div class="kpi-val" id="k-in-maint" style="color:#f59e0b">—</div><div class="kpi-lbl">In Maintenance</div></div>
+          </div>
+          <div class="kpi" style="--kc:#6b7280;animation-delay:.48s" onclick="loadEquip(1,'');document.getElementById('eq-status').value='retired';loadEquip()">
+            <div class="kpi-ic" style="background:#6b728020">🗄️</div>
+            <div><div class="kpi-val" id="k-retired" style="color:#6b7280">—</div><div class="kpi-lbl">Retired Assets</div></div>
+          </div>
+          <div class="kpi" style="--kc:#8b5cf6;animation-delay:.56s" onclick="nav('depreciation')">
+            <div class="kpi-ic" style="background:#8b5cf620">💰</div>
+            <div><div class="kpi-val" id="k-asset-value" style="color:#8b5cf6">—</div><div class="kpi-lbl">Total Asset Value</div></div>
+          </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="ch-head">
+              <div><div class="ch-title">Assets by Category</div><div class="ch-sub">Distribution overview</div></div>
+            </div>
+            <div class="chart-container" style="height:240px"><canvas id="catChart"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="ch-head">
+              <div><div class="ch-title">Monthly Assignments</div><div class="ch-sub">Last 6 months trend</div></div>
+            </div>
+            <div class="chart-container" style="height:240px"><canvas id="monChart"></canvas></div>
+          </div>
+        </div>
+
+        <!-- Bottom Row: Activity + Warranty -->
+        <div class="dash-bot">
+          <div class="card">
+            <div class="card-head">
+              <span class="card-title">🕐 Recent Activity</span>
+              <button class="btn btn-xs btn-ghost" onclick="nav('history')">View all →</button>
+            </div>
+            <div id="act-list"></div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <span class="card-title">⚠️ Warranty Expiring Soon</span>
+              <button class="btn btn-xs btn-ghost" onclick="showWarrantyDetail()">View all →</button>
+            </div>
+            <div id="warr-list"></div>
+          </div>
+        </div>
+
+        <!-- Second Bottom Row: Dept Breakdown + Top Assets -->
+        <div class="dash-bot" style="margin-top:1.1rem">
+          <div class="card">
+            <div class="card-head">
+              <span class="card-title">🏢 Assets by Department</span>
+              <button class="btn btn-xs btn-ghost" onclick="nav('reports')">Reports →</button>
+            </div>
+            <div id="dept-breakdown-list" style="padding:0 0 4px"></div>
+          </div>
+          <div class="card">
+            <div class="card-head">
+              <span class="card-title">📊 Asset Status Overview</span>
+              <button class="btn btn-xs btn-ghost" onclick="nav('equipment')">View all →</button>
+            </div>
+            <div id="status-overview-list" style="padding:8px 1.4rem 12px"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ EQUIPMENT ══════════════════════════════════════════ -->
+      <div id="pg-equipment" class="page">
+        <div class="ph">
+          <div class="ph-left"><h2>Equipment</h2><p>All IT assets & devices</p></div>
+          <div class="ph-right">
+            <input type="text" class="filter-sel" id="eq-search" placeholder="🔍 Search brand, model, serial..." oninput="loadEquip(1, this.value)" style="min-width:200px">
+            <select class="filter-sel" id="eq-status" onchange="loadEquip()">
+              <option value="">All Status</option>
+              <option value="available">Available</option>
+              <option value="assigned">Assigned</option>
+              <option value="maintenance">Maintenance</option>
+              <option value="retired">Retired</option>
+              <option value="lost">Lost</option>
+            </select>
+            <select class="filter-sel" id="eq-cat" onchange="loadEquip()">
+              <option value="">All Categories</option>
+            </select>
+            <button class="btn btn-sm btn-outline role-manager-up" onclick="exportData('equipment')">⬇ Excel</button>
+            <button class="btn btn-sm btn-outline role-manager-up" onclick="exportPDF('equipment')" style="background:#ef444415;color:#ef4444;border-color:#ef4444">⬇ PDF</button>
+            <button class="btn btn-sm btn-primary role-manager-up" onclick="openAddModal('equipment')">+ Add Equipment</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="tbl-scroll">
+            <table class="data-tbl">
+              <thead><tr>
+                <th>Asset Tag</th><th>Category</th><th>Brand / Model</th>
+                <th>Serial No.</th><th>Status</th><th>Condition</th>
+                <th>Assigned To</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="eq-tbody"></tbody>
+            </table>
+          </div>
+          <div class="tbl-foot">
+            <span class="count-lbl" id="eq-cnt"></span>
+            <div class="pagination" id="eq-pag"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ EMPLOYEES ══════════════════════════════════════════ -->
+      <div id="pg-employees" class="page">
+        <div class="ph">
+          <div class="ph-left"><h2>Employees</h2><p>Team directory & asset owners</p></div>
+          <div class="ph-right">
+            <input type="text" class="filter-sel" id="emp-search" placeholder="🔍 Search name, email, position..." oninput="loadEmp(1, this.value)" style="min-width:200px">
+            <select class="filter-sel" id="emp-dept" onchange="loadEmp()">
+              <option value="">All Departments</option>
+            </select>
+            <button class="btn btn-sm btn-outline role-manager-up" onclick="exportData('employees')">⬇ Excel</button>
+            <button class="btn btn-sm btn-outline role-manager-up" onclick="exportPDF('employees')" style="background:#ef444415;color:#ef4444;border-color:#ef4444">⬇ PDF</button>
+            <button class="btn btn-sm btn-primary role-manager-up" onclick="openAddModal('employee')">+ Add Employee</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="tbl-scroll">
+            <table class="data-tbl">
+              <thead><tr>
+                <th>ID</th><th>Name</th><th>Department</th><th>Position</th>
+                <th>Email</th><th>Phone</th><th>Assets</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="emp-tbody"></tbody>
+            </table>
+          </div>
+          <div class="tbl-foot"><span class="count-lbl" id="emp-cnt"></span><div class="pagination" id="emp-pag"></div></div>
+        </div>
+      </div>
+
+      <!-- ══ ASSIGNMENTS ════════════════════════════════════════ -->
+      <div id="pg-assignments" class="page">
+        <div class="ph">
+          <div class="ph-left"><h2>Assignments</h2><p>Equipment allocation tracking</p></div>
+          <div class="ph-right">
+            <input type="text" class="filter-sel" id="asgn-search" placeholder="🔍 Search employee, asset, equipment..." oninput="loadAsgn(this.value)" style="min-width:200px">
+            <select class="filter-sel" id="asgn-status" onchange="loadAsgn()">
+              <option value="">All</option>
+              <option value="active">Active</option>
+              <option value="returned">Returned</option>
+            </select>
+            <button class="btn btn-sm btn-outline role-manager-up" onclick="exportData('assignments')">⬇ Excel</button>
+            <button class="btn btn-sm btn-outline role-manager-up" onclick="exportPDF('assignments')" style="background:#ef444415;color:#ef4444;border-color:#ef4444">⬇ PDF</button>
+            <button class="btn btn-sm btn-primary role-manager-up" onclick="openAddModal('assignment')">+ New Assignment</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="tbl-scroll">
+            <table class="data-tbl">
+              <thead><tr>
+                <th>Employee</th><th>Equipment</th><th>Asset Tag</th>
+                <th>Assigned Date</th><th>Expected Return</th><th>Status</th><th>Action</th>
+              </tr></thead>
+              <tbody id="asgn-tbody"></tbody>
+            </table>
+          </div>
+          <div class="tbl-foot"><span class="count-lbl" id="asgn-cnt"></span><div class="pagination" id="asgn-pag"></div></div>
+        </div>
+      </div>
+
+      <!-- ══ HISTORY ════════════════════════════════════════════ -->
+      <div id="pg-history" class="page">
+        <div class="ph">
+          <div class="ph-left"><h2>Audit Log</h2><p>Complete activity trail</p></div>
+          <div class="ph-right">
+            <select class="filter-sel" id="hist-tbl" onchange="loadHist()">
+              <option value="">All Tables</option>
+              <option value="equipment">Equipment</option>
+              <option value="employees">Employees</option>
+              <option value="assignments">Assignments</option>
+              <option value="users">Users</option>
+            </select>
+            <select class="filter-sel" id="hist-act" onchange="loadHist()">
+              <option value="">All Actions</option>
+              <option value="INSERT">Create</option>
+              <option value="UPDATE">Update</option>
+              <option value="DELETE">Delete</option>
+              <option value="LOGIN">Login</option>
+              <option value="EXPORT">Export</option>
+            </select>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <div class="tbl-scroll">
+            <table class="data-tbl">
+              <thead><tr>
+                <th>Time</th><th>User</th><th>Action</th><th>Table</th><th>Record ID</th><th>IP Address</th>
+              </tr></thead>
+              <tbody id="hist-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ DEPRECIATION ══════════════════════════════════════ -->
+      <div id="pg-depreciation" class="page">
+        <div class="ph">
+          <div class="ph-left"><h2>Depreciation Calculator</h2><p>Asset value over time using Straight-Line depreciation method</p></div>
+          <div class="ph-right">
+            <select class="filter-sel" id="dep-life" onchange="loadDepreciation()">
+              <option value="1">1-Year Life</option>
+              <option value="2">2-Year Life</option>
+              <option value="3">3-Year Life</option>
+              <option value="4">4-Year Life</option>
+              <option value="5" selected>5-Year Life</option>
+              <option value="6">6-Year Life</option>
+              <option value="7">7-Year Life</option>
+              <option value="8">8-Year Life</option>
+              <option value="9">9-Year Life</option>
+              <option value="10">10-Year Life</option>
+            </select>
+          </div>
+        </div>
+        <div id="dep-summary" class="kpi-row" style="margin-bottom:16px"></div>
+        <div class="card">
+          <div class="tbl-wrap">
+            <table class="data-tbl">
+              <thead><tr>
+                <th>Asset Tag</th><th>Device</th><th>Purchase Price</th><th>Current Value</th>
+                <th>Depreciated</th><th>Depreciation %</th><th>Age</th><th>Status</th>
+              </tr></thead>
+              <tbody id="dep-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ══ MAINTENANCE ══════════════════════════════════════ -->
+      <div id="pg-maintenance" class="page">
+        <div class="ph">
+          <div class="ph-left"><h2>Maintenance Tracker</h2><p>Service schedules, repairs & inspections</p></div>
+          <div class="ph-right">
+            <select class="filter-sel" id="maint-status" onchange="loadMaintenance()">
+              <option value="">All Status</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="in_progress">In Progress</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+            <select class="filter-sel" id="maint-type" onchange="loadMaintenance()">
+              <option value="">All Types</option>
+              <option value="scheduled">Scheduled</option>
+              <option value="repair">Repair</option>
+              <option value="inspection">Inspection</option>
+              <option value="upgrade">Upgrade</option>
+              <option value="cleaning">Cleaning</option>
+            </select>
+            <button class="btn btn-sm btn-primary role-manager-up" onclick="openAddModal('maintenance')">+ Schedule</button>
+          </div>
+        </div>
+        <!-- Due Soon Alert -->
+        <div id="maint-due-alert" style="display:none" class="card" style="border-left:4px solid #f59e0b;margin-bottom:16px">
+          <div class="card-head"><span class="card-title">⚠️ Due / Overdue</span></div>
+          <div id="maint-due-list"></div>
+        </div>
+        <div class="kpi-grid" id="maint-kpis" style="margin-bottom:16px"></div>
+        <div class="table-wrap">
+          <div class="tbl-scroll">
+            <table class="data-tbl">
+              <thead><tr>
+                <th>Asset</th><th>Type</th><th>Title</th><th>Scheduled</th>
+                <th>Status</th><th>Cost</th><th>Vendor</th><th>Actions</th>
+              </tr></thead>
+              <tbody id="maint-tbody"></tbody>
+            </table>
+          </div>
+          <div class="tbl-foot"><span class="count-lbl" id="maint-cnt"></span></div>
+        </div>
+      </div>
+
+      <!-- ══ REPORTS ═══════════════════════════════════════════ -->
+      <div id="pg-reports" class="page">
+        <div class="ph">
+          <div class="ph-left"><h2>Department Reports</h2><p>Asset distribution & cost analysis by department</p></div>
+          <div class="ph-right">
+            <button class="btn btn-sm btn-outline" onclick="loadReports()">↻ Refresh</button>
+            <button class="btn btn-sm btn-outline" onclick="switchReportTab('dept')" id="tab-dept">🏢 By Department</button>
+            <button class="btn btn-sm btn-outline" onclick="switchReportTab('cost')" id="tab-cost">💰 Cost Analysis</button>
+          </div>
+        </div>
+        <div id="reports-dept-view">
+          <div class="charts-row" style="margin-bottom:16px">
+            <div class="chart-card">
+              <div class="ch-head"><div><div class="ch-title">Assets by Department</div><div class="ch-sub">Active assignments</div></div></div>
+              <div class="chart-container" style="height:260px"><canvas id="deptBarChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="ch-head"><div><div class="ch-title">Asset Value by Department</div><div class="ch-sub">Total ₹ value assigned</div></div></div>
+              <div class="chart-container" style="height:260px"><canvas id="deptValueChart"></canvas></div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <div class="tbl-scroll">
+              <table class="data-tbl">
+                <thead><tr>
+                  <th>Department</th><th>Employees</th><th>Active Assets</th>
+                  <th>Total Value</th><th>Avg Value/Emp</th><th>Assets/Employee</th><th>Top Categories</th>
+                </tr></thead>
+                <tbody id="dept-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <div id="reports-cost-view" style="display:none">
+          <div class="charts-row" style="margin-bottom:16px">
+            <div class="chart-card">
+              <div class="ch-head"><div><div class="ch-title">Spend by Category</div><div class="ch-sub">Total purchase value</div></div></div>
+              <div class="chart-container" style="height:260px"><canvas id="costCatChart"></canvas></div>
+            </div>
+            <div class="chart-card">
+              <div class="ch-head"><div><div class="ch-title">Yearly Procurement</div><div class="ch-sub">Items & spend per year</div></div></div>
+              <div class="chart-container" style="height:260px"><canvas id="yearlyChart"></canvas></div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <div class="tbl-scroll">
+              <table class="data-tbl">
+                <thead><tr>
+                  <th>Category</th><th>Total Items</th><th>Total Cost</th><th>Avg Cost</th>
+                  <th>Max Cost</th><th>% of Total Spend</th>
+                </tr></thead>
+                <tbody id="cost-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ GLOBAL SEARCH ════════════════════════════════════ -->
+      <div id="pg-search" class="page">
+        <div class="ph">
+          <div class="ph-left">
+            <button class="btn btn-sm btn-outline" onclick="history.length>1 ? nav(prevPage||'dashboard') : nav('dashboard')" style="margin-right:8px;display:inline-flex;align-items:center;gap:4px">← Back</button>
+            <h2>Global Search</h2><p>Search across all equipment, employees, asset tags & serial numbers</p>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:20px;padding:20px">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div style="position:relative;flex:1">
+              <span style="position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:18px">🔍</span>
+              <input id="global-search-input" type="text" class="fc" 
+                style="padding:.85rem 1rem .85rem 3rem;font-size:1rem;width:100%;box-sizing:border-box"
+                placeholder="Search by name, asset tag, serial number, department, model..."
+                oninput="handleGlobalSearch(event)">
+            </div>
+            <button class="btn btn-primary" onclick="doGlobalSearch()">Search</button>
+          </div>
+          <div id="search-meta" style="margin-top:8px;font-size:13px;color:var(--c-muted)"></div>
+        </div>
+        <div id="search-results" style="display:none">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+            <div class="card">
+              <div class="card-head"><span class="card-title">💻 Equipment</span><span id="eq-search-cnt" class="badge" style="background:var(--primary-light);color:var(--primary)">0</span></div>
+              <div id="eq-search-results" style="padding:0 16px"></div>
+            </div>
+            <div class="card">
+              <div class="card-head"><span class="card-title">👥 Employees</span><span id="emp-search-cnt" class="badge" style="background:#10b98120;color:#10b981">0</span></div>
+              <div id="emp-search-results" style="padding:0 16px"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><span class="card-title">🔗 Assignments</span><span id="asgn-search-cnt" class="badge" style="background:#f59e0b20;color:#f59e0b">0</span></div>
+            <div id="asgn-search-results" style="padding:0 16px"></div>
+          </div>
+        </div>
+        <div id="search-empty" class="empty-state" style="display:none">
+          <div style="text-align:center;padding:60px 20px;color:var(--c-muted)">
+            <div style="font-size:3rem;margin-bottom:16px">🔍</div>
+            <p>No results found. Try a different search term.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ MAINTENANCE ══════════════════════════════════════ -->
+
+      <!-- ══ REPORTS ════════════════════════════════════════════ -->
+
+
+    </main>
+  </div>
+</div>
+
+<!-- ═══════ MODALS ════════════════════════════════════════════ -->
+<div class="overlay" id="overlay" onclick="if(event.target===this)closeModal()"></div>
+
+
+<!-- Maintenance Log Modal -->
+<div class="modal" id="modal-maintenance-log">
+  <div class="mhead"><h3>Log Maintenance Service</h3><button class="mclose" onclick="closeModal()">✕</button></div>
+  <div class="mbody">
+    <input type="hidden" id="ml-id">
+    <div class="frow">
+      <div class="fg"><label>Equipment *</label><select class="fc" id="ml-equipment_id"><option value="">Select equipment...</option></select></div>
+      <div class="fg"><label>Service Type *</label><input class="fc" id="ml-service_type" placeholder="Annual service, Battery replace..."></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Performed By</label><input class="fc" id="ml-performed_by" placeholder="Technician name"></div>
+      <div class="fg"><label>Date Performed *</label><input class="fc" type="date" id="ml-performed_date"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Cost (₹)</label><input class="fc" type="number" id="ml-cost" placeholder="0"></div>
+      <div class="fg"><label>Next Service Date</label><input class="fc" type="date" id="ml-next_service_date"></div>
+    </div>
+    <div class="fg"><label>Parts Replaced</label><input class="fc" id="ml-parts_replaced" placeholder="Battery, RAM, SSD..."></div>
+    <div class="fg"><label>Description</label><textarea class="fc" id="ml-description" rows="2" placeholder="Work done details..."></textarea></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveMaintLog()">🔧 Save Log</button>
+  </div>
+</div>
+
+<!-- Maintenance Schedule Modal -->
+<div class="modal modal-sm" id="modal-maintenance-schedule">
+  <div class="mhead"><h3>Create Maintenance Schedule</h3><button class="mclose" onclick="closeModal()">✕</button></div>
+  <div class="mbody">
+    <div class="fg"><label>Equipment *</label><select class="fc" id="ms-equipment_id"><option value="">Select equipment...</option></select></div>
+    <div class="frow">
+      <div class="fg"><label>Service Type *</label><input class="fc" id="ms-service_type" placeholder="Annual service, Cleaning..."></div>
+      <div class="fg"><label>Frequency (days)</label><input class="fc" type="number" id="ms-frequency_days" placeholder="365 for yearly"></div>
+    </div>
+    <div class="fg"><label>Next Service Date *</label><input class="fc" type="date" id="ms-next_service_date"></div>
+    <div class="fg"><label>Notes</label><textarea class="fc" id="ms-notes" rows="2"></textarea></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveMainSchedule()">📅 Save Schedule</button>
+  </div>
+</div>
+
+<!-- Equipment Modal -->
+<div class="modal" id="modal-equipment">
+  <div class="mhead">
+    <h3 id="eq-mtitle">Add Equipment</h3>
+    <button class="mclose" onclick="closeModal()">✕</button>
+  </div>
+  <div class="mbody">
+    <input type="hidden" id="eq-id">
+    <div class="frow">
+      <div class="fg"><label>Asset Tag</label><input class="fc" id="eq-asset_tag" placeholder="Auto-generated if empty"></div>
+      <div class="fg"><label>Category *</label>
+        <select class="fc" id="eq-category">
+          <option value="">Select category...</option>
+          <option>Laptop</option><option>Desktop</option><option>Monitor</option>
+          <option>Keyboard</option><option>Mouse</option><option>Phone</option>
+          <option>Tablet</option><option>Printer</option><option>Server</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Brand</label><input class="fc" id="eq-brand" placeholder="Dell, Apple, HP..."></div>
+      <div class="fg"><label>Model</label><input class="fc" id="eq-model" placeholder="XPS 15, MacBook Pro..."></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Serial Number</label><input class="fc" id="eq-serial_number"></div>
+      <div class="fg"><label>Condition</label>
+        <select class="fc" id="eq-condition">
+          <option value="excellent">Excellent</option><option value="good">Good</option>
+          <option value="fair">Fair</option><option value="poor">Poor</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Status</label>
+        <select class="fc" id="eq-status-m">
+          <option value="available">Available</option>
+          <option value="assigned">Assigned</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="retired">Retired</option>
+          <option value="lost">Lost</option>
+        </select>
+      </div>
+      <div class="fg"><label>Purchase Price (₹)</label><input class="fc" type="number" id="eq-purchase_price" placeholder="0"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Purchase Date</label><input class="fc" type="date" id="eq-purchase_date"></div>
+      <div class="fg"><label>Warranty Expiry</label><input class="fc" type="date" id="eq-warranty_expiry"></div>
+    </div>
+    <div class="fg"><label>Location</label><input class="fc" id="eq-location" placeholder="Office, Server Room..."></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveEquip()">💾 Save Equipment</button>
+  </div>
+</div>
+
+<!-- Employee Modal -->
+<div class="modal" id="modal-employee">
+  <div class="mhead">
+    <h3 id="emp-mtitle">Add Employee</h3>
+    <button class="mclose" onclick="closeModal()">✕</button>
+  </div>
+  <div class="mbody">
+    <input type="hidden" id="emp-id">
+    <div class="frow">
+      <div class="fg"><label>Employee ID</label><input class="fc" id="emp-employee_id" placeholder="EMP001"></div>
+      <div class="fg"><label>Full Name *</label><input class="fc" id="emp-name" placeholder="John Doe"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Email</label><input class="fc" type="email" id="emp-email" placeholder="john@company.com"></div>
+      <div class="fg"><label>Department</label>
+        <select class="fc" id="emp-department">
+          <option value="">Select...</option>
+          <option>Engineering</option><option>Design</option><option>Marketing</option>
+          <option>HR</option><option>Finance</option><option>Operations</option>
+          <option>Sales</option><option>Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Position</label><input class="fc" id="emp-position" placeholder="Software Engineer"></div>
+      <div class="fg"><label>Mobile Phone</label><input class="fc" type="tel" id="emp-mobile_phone" placeholder="9876543210"></div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Desk Phone</label><input class="fc" type="tel" id="emp-desk_phone"></div>
+      <div class="fg"><label>Location / Desk</label><input class="fc" id="emp-location" placeholder="Floor 2, Desk 24"></div>
+    </div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveEmp()">💾 Save Employee</button>
+  </div>
+</div>
+
+<!-- Assignment Modal -->
+<div class="modal" id="modal-assignment">
+  <div class="mhead"><h3>New Assignment</h3><button class="mclose" onclick="closeModal()">✕</button></div>
+  <div class="mbody">
+    <div class="fg"><label>Employee *</label><select class="fc" id="asgn-emp"><option value="">Select employee...</option></select></div>
+    <div class="fg"><label>Equipment *</label><select class="fc" id="asgn-eq"><option value="">Select available equipment...</option></select></div>
+    <div class="frow">
+      <div class="fg"><label>Expected Return Date</label><input class="fc" type="date" id="asgn-ret"></div>
+      <div class="fg"><label>Notes / Reason</label><input class="fc" id="asgn-notes" placeholder="Project, WFH..."></div>
+    </div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveAsgn()">🔗 Assign</button>
+  </div>
+</div>
+
+<!-- Return Modal -->
+<div class="modal modal-sm" id="modal-return">
+  <div class="mhead"><h3>Return Equipment</h3><button class="mclose" onclick="closeModal()">✕</button></div>
+  <div class="mbody">
+    <input type="hidden" id="ret-id">
+    <div class="fg"><label>Return Reason *</label><input class="fc" id="ret-reason" placeholder="Project completed, leaving..."></div>
+    <div class="fg"><label>Condition on Return</label>
+      <select class="fc" id="ret-cond">
+        <option value="excellent">Excellent</option><option value="good" selected>Good</option>
+        <option value="fair">Fair</option><option value="poor">Poor</option>
+      </select>
+    </div>
+    <div class="fg"><label>Notes</label><textarea class="fc" id="ret-notes" rows="2"></textarea></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-warn" onclick="confirmReturn()">↩ Confirm Return</button>
+  </div>
+</div>
+
+<!-- Export All Modal -->
+<div class="modal" id="modal-export-all">
+  <div class="mhead">
+    <h3 style="display:flex;align-items:center;gap:10px">
+      <span style="color:var(--primary)">⬇ Export Data</span>
+    </h3>
+    <button class="mclose" onclick="closeModal()">✕</button>
+  </div>
+  <div class="mbody">
+    <p style="color:var(--c-muted);font-size:13px;margin:0 0 20px">Select the data tables you want to export and choose your format.</p>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px" id="export-checkboxes">
+      <label class="export-check-row selected" onclick="toggleExportRow(this)">
+        <input type="checkbox" value="equipment" checked>
+        <span class="export-check-icon">💻</span>
+        <div><strong style="color:var(--txt)">Equipment</strong><div style="font-size:11px;color:var(--c-muted)">All IT assets & devices</div></div>
+        <span class="export-check-tick">✓</span>
+      </label>
+      <label class="export-check-row selected" onclick="toggleExportRow(this)">
+        <input type="checkbox" value="employees" checked>
+        <span class="export-check-icon">👥</span>
+        <div><strong style="color:var(--txt)">Employees</strong><div style="font-size:11px;color:var(--c-muted)">Staff directory & assignments</div></div>
+        <span class="export-check-tick">✓</span>
+      </label>
+      <label class="export-check-row selected" onclick="toggleExportRow(this)">
+        <input type="checkbox" value="assignments" checked>
+        <span class="export-check-icon">🔗</span>
+        <div><strong style="color:var(--txt)">Assignments</strong><div style="font-size:11px;color:var(--c-muted)">Equipment allocation history</div></div>
+        <span class="export-check-tick">✓</span>
+      </label>
+    </div>
+    <div id="export-progress" style="display:none;margin-bottom:16px">
+      <div style="background:var(--c-border);border-radius:8px;height:6px;overflow:hidden">
+        <div id="export-progress-bar" style="height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6);width:0%;transition:width 0.4s ease;border-radius:8px"></div>
+      </div>
+      <p id="export-progress-label" style="font-size:12px;color:var(--c-muted);margin:8px 0 0;text-align:center"></p>
+    </div>
+  </div>
+  <div class="mfoot" style="gap:10px">
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn" onclick="runExportAll('excel')" style="background:linear-gradient(135deg,#059669,#10b981);color:white;border:none;display:flex;align-items:center;gap:6px">
+      <span>📊</span> Download Excel
+    </button>
+    <button class="btn" onclick="runExportAll('pdf')" style="background:linear-gradient(135deg,#dc2626,#ef4444);color:white;border:none;display:flex;align-items:center;gap:6px">
+      <span>📄</span> Download PDF
+    </button>
+  </div>
+</div>
+</div>
+
+<!-- Timeline Modal -->
+<div class="modal modal-lg" id="timeline-modal">
+  <div class="mhead">
+    <h3 id="timeline-title">Activity Timeline</h3>
+    <button class="mclose" onclick="closeModal()">✕</button>
+  </div>
+  <div class="mbody" id="timeline-body" style="max-height:60vh;overflow-y:auto"></div>
+  <div class="mfoot">
+    <button class="btn btn-outline" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<!-- Bulk Import Modal -->
+<div class="modal modal-sm" id="bulk-modal">
+  <div class="mhead"><h3>📦 Bulk CSV Import</h3><button class="mclose" onclick="closeModal()">✕</button></div>
+  <div class="mbody">
+    <p style="color:var(--c-muted);font-size:14px;margin-bottom:12px">Upload a CSV file to add multiple equipment items at once.</p>
+    <div class="fg">
+      <label>CSV File *</label>
+      <input type="file" id="bulk-file" accept=".csv" class="fc" style="padding:8px">
+    </div>
+    <div style="margin-top:8px">
+      <button class="btn btn-sm btn-outline" onclick="downloadCSVTemplate()">⬇ Download Template</button>
+    </div>
+    <div id="bulk-result" style="margin-top:12px;font-size:13px"></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="submitBulkImport()">📥 Import</button>
+  </div>
+</div>
+
+
+<!-- Maintenance Modal -->
+<div class="modal" id="modal-maintenance">
+  <div class="mhead">
+    <h3 id="maint-mtitle">Schedule Maintenance</h3>
+    <button class="mclose" onclick="closeModal()">✕</button>
+  </div>
+  <div class="mbody">
+    <input type="hidden" id="maint-id">
+    <div class="frow">
+      <div class="fg">
+        <label>Equipment *</label>
+        <select class="fc" id="maint-equipment_id">
+          <option value="">Select equipment...</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Type *</label>
+        <select class="fc" id="maint-type-m">
+          <option value="scheduled">Scheduled Service</option>
+          <option value="repair">Repair</option>
+          <option value="inspection">Inspection</option>
+          <option value="upgrade">Upgrade</option>
+          <option value="cleaning">Cleaning</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+    </div>
+    <div class="fg"><label>Title *</label><input class="fc" id="maint-title" placeholder="e.g. Annual battery check"></div>
+    <div class="fg"><label>Description</label><textarea class="fc" id="maint-description" rows="2" placeholder="Details about this maintenance task..."></textarea></div>
+    <div class="frow">
+      <div class="fg"><label>Scheduled Date</label><input class="fc" type="date" id="maint-scheduled_date"></div>
+      <div class="fg">
+        <label>Status</label>
+        <select class="fc" id="maint-status-m">
+          <option value="scheduled">Scheduled</option>
+          <option value="in_progress">In Progress</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+    </div>
+    <div class="frow">
+      <div class="fg"><label>Completed Date</label><input class="fc" type="date" id="maint-completed_date"></div>
+      <div class="fg"><label>Cost (₹)</label><input class="fc" type="number" id="maint-cost" placeholder="0"></div>
+    </div>
+    <div class="fg"><label>Vendor / Technician</label><input class="fc" id="maint-vendor" placeholder="Service partner name"></div>
+    <div class="fg"><label>Notes</label><textarea class="fc" id="maint-notes" rows="2"></textarea></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" onclick="saveMaintenance()">🔧 Save</button>
+  </div>
+</div>
+
+
+<!-- Lifecycle Timeline Modal -->
+<div class="modal modal-lg" id="lifecycle-modal">
+  <div class="mhead">
+    <h3 id="lifecycle-title">Asset Lifecycle Timeline</h3>
+    <button class="mclose" onclick="closeModal()">✕</button>
+  </div>
+  <div class="mbody" id="lifecycle-body" style="max-height:65vh;overflow-y:auto">
+    <div class="fg" style="margin-bottom:16px">
+      <label style="margin-bottom:8px;display:block">Transition to Status</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap" id="lifecycle-btns"></div>
+    </div>
+    <div id="lifecycle-timeline"></div>
+  </div>
+  <div class="mfoot">
+    <button class="btn btn-outline" onclick="closeModal()">Close</button>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="js/api.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

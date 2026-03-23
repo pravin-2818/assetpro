@@ -1,0 +1,74 @@
+{
+  "name": "assetpro-v5",
+  "version": "5.0.0",
+  "description": "AssetPro v5 — Professional IT Asset Management System with Maintenance Tracking, Reports, Lifecycle Management & Global Search",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "seed": "node utils/seed.js",
+    "test": "jest --testPathPattern=\"tests/\" --coverage --forceExit",
+    "test:unit": "jest --testPathPattern=\"app.test.js\" --coverage --forceExit",
+    "test:integration": "jest --testPathPattern=\"integration.test.js\" --forceExit",
+    "test:all": "jest --coverage --forceExit"
+  },
+  "keywords": [
+    "inventory",
+    "asset-management",
+    "equipment-tracking"
+  ],
+  "author": "IT Team",
+  "license": "MIT",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "better-sqlite3": "^12.6.2",
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "express-session": "^1.18.2",
+    "express-validator": "^7.0.1",
+    "helmet": "^7.1.0",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1",
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.7",
+    "pdfkit": "^0.14.0",
+    "qrcode": "^1.5.4",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "nodemon": "^3.0.1",
+    "supertest": "^6.3.4"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": [
+      "**/*.js",
+      "!node_modules/**",
+      "!coverage/**",
+      "!utils/seed.js"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 60,
+        "functions": 70,
+        "lines": 70,
+        "statements": 70
+      }
+    },
+    "testMatch": [
+      "**/__tests__/**/*.js",
+      "**/tests/**/*.test.js"
+    ],
+    "testTimeout": 15000
+  }
+}

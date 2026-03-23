@@ -1,0 +1,44 @@
+# Node dependencies
+node_modules/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+
+# Environment files
+.env
+
+
+# Build / coverage
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Uploads / temporary files
+uploads/
+tmp/
+temp/
+
+# Database files
+*.sqlite
+*.db
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / editor
+.vscode/
+.idea/
+
+# Misc
+*.tgz
+*.log.*
